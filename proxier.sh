@@ -105,7 +105,7 @@ start() {
 
     echo "Starting proxy..."
 
-    bash ssh-connect.sh -p "$PROXY_PORT" -k "$KEY_PATH" -l "$SSH_LOG" -s "$SSH_SOCKS_PROXY" -u "$PROXY_USER" -h "$PROXY_HOST" -K "$PROXY_KEY" &
+    bash $__dirname/ssh-connect.sh -p "$PROXY_PORT" -k "$KEY_PATH" -l "$SSH_LOG" -s "$SSH_SOCKS_PROXY" -u "$PROXY_USER" -h "$PROXY_HOST" -K "$PROXY_KEY" &
     sleep 1 # Allows the system to handle the output buffer before moving on
     disown
 

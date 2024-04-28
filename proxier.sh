@@ -57,19 +57,12 @@ start() {
 
     echo "Starting proxy..."
 
-    ssh -NvD "$PROXY_PORT" \
-        -M -S "$sshSocksProxy" \
-        -fnT -i "$KEY_PATH" \
-        -o "UserKnownHostsFile=$proxyKey" \
-        -o "ServerAliveInterval=60" \
-        -p 22 \
-        -vvv \
-        -E "$sshLog" \
-        "${PROXY_USER}@${PROXY_HOST}" &
-
+    bash ssh-connect.sh -p "$PROXY_PORT" -k "$KEY_PATH" -l "$sshLog" -s "$sshSocksProxy" -u "$PROXY_USER" -h "$PROXY_HOST" -K "$proxyKey" &
+    sleep 1 # Allows the system to handle the output buffer before moving on
     disown
 
     bash "$__dirname/status-checker.sh" &
+    sleep 1 # Allows the system to handle the output buffer before moving on
     disown
 }
 

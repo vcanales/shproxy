@@ -1,11 +1,11 @@
-#!/bin/bash
-
 # Define the location of environment and related files
-__dirname="$(dirname "$(readlink -f "$0")")"
+# Cross-platform robust way to find the source directory of the script
+__dirname="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[ -L "${BASH_SOURCE[0]}" ] && __dirname="$(dirname "$(readlink "${BASH_SOURCE[0]}")")"
+
 ENV_PATH="$__dirname/.env"
 SSH_LOG="$__dirname/ssh.log"
 SSH_SOCKS_PROXY="$__dirname/proxier-socks"
-PROXY_KEY="$__dirname/ProxyHostKey.pub"
 
 # Function to load existing environment variables from .env
 load_env() {
@@ -22,20 +22,23 @@ init_env() {
     load_env
 
     # Read or set default values
-    read -p "Enter proxy user [current: ${PROXY_USER:-'not set'}, default: user]: " input
-    PROXY_USER=${input:-${PROXY_USER:-user}}
+    read -p "Enter proxy user [current: ${PROXY_USER:-'not set'}]: " input
+    PROXY_USER=${input:-${PROXY_USER}}
 
-    read -p "Enter proxy host [current: ${PROXY_HOST:-'not set'}, default: localhost]: " input
-    PROXY_HOST=${input:-${PROXY_HOST:-localhost}}
+    read -p "Enter proxy host [current: ${PROXY_HOST:-'not set'}]: " input
+    PROXY_HOST=${input:-${PROXY_HOST}}
 
-    read -p "Enter proxy port [current: ${PROXY_PORT:-'not set'}, default: 8080]: " input
-    PROXY_PORT=${input:-${PROXY_PORT:-8080}}
+    read -p "Enter proxy port [current: ${PROXY_PORT:-'not set'}]: " input
+    PROXY_PORT=${input:-${PROXY_PORT}}
 
     read -p "Enter the path to your SSH key [current: ${KEY_PATH:-'not set'}, default: ~/.ssh/id_rsa]: " input
     KEY_PATH=${input:-${KEY_PATH:-~/.ssh/id_rsa}}
 
     read -p "Enter the path to your proxy host key [current: ${PROXY_KEY:-'not set'}]: " input
     PROXY_KEY=${input:-${PROXY_KEY}}
+
+    read -p "Enter the URL to the PAC file [current: ${PAC_FILE_URL:-'not set'}]: " input
+    PAC_FILE_URL=${input:-${PAC_FILE_URL}}
 
     # Confirmation to save settings
     echo
@@ -45,6 +48,7 @@ init_env() {
     echo "PROXY_PORT=${PROXY_PORT}"
     echo "KEY_PATH=${KEY_PATH}"
     echo "PROXY_KEY=${PROXY_KEY}"
+    echo "PAC_FILE_URL=${PAC_FILE_URL}"
     echo
 
     read -p "Save these settings? [Y/n] " response
@@ -53,10 +57,12 @@ init_env() {
         echo "PROXY_HOST='${PROXY_HOST}'" >> "$ENV_PATH"
         echo "PROXY_PORT='${PROXY_PORT}'" >> "$ENV_PATH"
         echo "KEY_PATH='${KEY_PATH}'" >> "$ENV_PATH"
+        echo "PAC_FILE_URL='${PAC_FILE_URL}'" >> "$ENV_PATH"
         if [ -n "$PROXY_KEY" ]; then
             echo "PROXY_KEY='${PROXY_KEY}'" >> "$ENV_PATH"
         else
-            sed -i '/PROXY_KEY/d' "$ENV_PATH"
+            # Use sed compatible with both GNU and BSD versions
+            sed -i.bak '/PROXY_KEY/d' "$ENV_PATH" && rm "$ENV_PATH.bak"
         fi
         echo "Configuration saved to $ENV_PATH"
     else
@@ -64,19 +70,20 @@ init_env() {
     fi
 }
 
+
 # Read the configuration from .env file
 read_config() {
-    if [ ! -f "$envPath" ]; then
-        touch "$envPath"
+    if [ ! -f "$ENV_PATH" ]; then
+        touch "$ENV_PATH"
     fi
-    cat "$envPath"
+    cat "$ENV_PATH"
 }
 
 # Start the proxy
 start() {
-    init_env
+    load_env
     if [ -z "$PROXY_HOST" ] || [ -z "$PROXY_PORT" ] || [ -z "$KEY_PATH" ] || [ -z "$PROXY_USER" ]; then
-        echo "Configuration variables are missing. Please run the 'proxier config' command to set them."
+        echo "Configuration variables are missing. Please run the 'proxier init' command to set them."
         return 1
     fi
 
@@ -134,7 +141,12 @@ status() {
 
 # Tail logs
 logs() {
-    tail -f "$SSH_LOG"
+    if [ -f "$SSH_LOG" ]; then
+        echo "Press 'Ctrl-C' to stop following the log, and 'q' to quit viewing the log."
+        less +F "$SSH_LOG"
+    else
+        echo "Log file does not exist: $SSH_LOG"
+    fi
 }
 
 # Handle script arguments to call functions

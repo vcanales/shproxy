@@ -37,7 +37,7 @@ function restart_ssh_tunnel {
   pkill -f "ssh -NvD $PROXY_PORT"
 
   # Start new SSH tunnel process
-  bash $__diranme/ssh-connect.sh -p "$PROXY_PORT" -k "$KEY_PATH" -l "$SSH_LOG" -s "$SSH_SOCKS_PROXY" -u "$PROXY_USER" -h "$PROXY_HOST" -K "$PROXY_KEY" &
+  bash $__dirname/ssh-connect.sh -p "$PROXY_PORT" -k "$KEY_PATH" -l "$SSH_LOG" -s "$SSH_SOCKS_PROXY" -u "$PROXY_USER" -h "$PROXY_HOST" -K "$PROXY_KEY" &
   [ -n $DEBUG == true ] && echo "SSH tunnel restarted."
 }
 

@@ -1,0 +1,7 @@
+# ssh process files
+pid
+*.pub
+ssh-socks-proxy*
+proxier.lock
+proxier-socks
+.env

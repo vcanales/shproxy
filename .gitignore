@@ -5,3 +5,4 @@ ssh-socks-proxy*
 proxier.lock
 proxier-socks
 .env
+*.log

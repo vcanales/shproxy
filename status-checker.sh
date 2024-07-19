@@ -61,8 +61,9 @@ if [ "$(uname)" == "Linux" ]; then
     # Check SSH connection
     check_ssh_connection
 
-    # Add a cron job to run this script every minute if it's not already added
-    (crontab -l 2>/dev/null | grep -q "$(basename "$0")") || (crontab -l 2>/dev/null; echo "* * * * * $__dirname/$(basename "$0")") | crontab -
+    # Add a cron job to run this script every minute if it's not already added.
+    # set MAILTO="" to avoid email notifications.
+    (crontab -l 2>/dev/null | grep -q "$(basename "$0")") || (crontab -l 2>/dev/null; echo "MAILTO=\"\""; echo "* * * * * $__dirname/$(basename "$0")") | crontab -
 
   ) 9>$__dirname/proxier.lock
 elif [ "$(uname)" == "Darwin" ]; then
